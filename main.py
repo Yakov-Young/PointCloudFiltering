@@ -1,58 +1,120 @@
 import sys
 import numpy as np
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QFileDialog
+from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QVBoxLayout, QWidget, QPushButton, QFileDialog, QHBoxLayout
 from view.visualizer_widget import VisualizerWidget
-from iot.pointcloud_io import load_from_file
-from model.point_cloud import PointCloud
+from view.filter_dialog import FilterDialog
+from controller.main_controller import MainController
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Point Cloud Filter")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 900, 700)
 
+        # Создаём контроллер и связываем с view
+        self.controller = MainController()
+        self.controller.set_view(self)
+
+        # Центральный виджет
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        layout = QVBoxLayout(central_widget)
+        main_layout = QVBoxLayout(central_widget)
 
-        # Кнопка загрузки файла
-        self.btn_load = QPushButton("Загрузить файл")
-        self.btn_load.clicked.connect(self.load_file)
-        layout.addWidget(self.btn_load)
+        # Панель инструментов (горизонтальная)
+        toolbar = QHBoxLayout()
+        self.btn_load = QPushButton("Загрузить")
+        self.btn_load.clicked.connect(self.on_load)
+        toolbar.addWidget(self.btn_load)
 
-        # Кнопка для теста (пока оставим)
-        self.btn_test = QPushButton("Тестовое облако")
-        self.btn_test.clicked.connect(self.update_cloud)
-        layout.addWidget(self.btn_test)
+        #self.btn_reset = QPushButton("Сброс")
+        #self.btn_reset.clicked.connect(self.on_reset)
+        #toolbar.addWidget(self.btn_reset)
+
+        # Также добавим кнопку "Сброс" (вернуться к исходному облаку)
+        self.btn_reset = QPushButton("Сбросить к исходному")
+        self.btn_reset.clicked.connect(self.reset_to_original)
+        toolbar.addWidget(self.btn_reset)
+
+        #self.btn_filter = QPushButton("Фильтр")
+        #self.btn_filter.clicked.connect(self.on_filter)
+        #toolbar.addWidget(self.btn_filter)
+
+        # В __init__ после других кнопок:
+        self.btn_filter = QPushButton("Применить фильтр")
+        self.btn_filter.clicked.connect(self.apply_filter_dialog)
+        toolbar.addWidget(self.btn_filter)
+
+        self.btn_evaluate = QPushButton("Оценка")
+        self.btn_evaluate.clicked.connect(self.on_evaluate)
+        toolbar.addWidget(self.btn_evaluate)
+
+        self.btn_save = QPushButton("Сохранить")
+        self.btn_save.clicked.connect(self.on_save)
+        toolbar.addWidget(self.btn_save)
+
+        main_layout.addLayout(toolbar)
 
         # Виджет визуализатора
         self.vis_widget = VisualizerWidget()
-        layout.addWidget(self.vis_widget)
+        main_layout.addWidget(self.vis_widget)
 
         self.statusBar().showMessage("Готово")
-        self.current_cloud: PointCloud = None
 
-    def load_file(self):
+    # --- Методы обратного вызова (вызываются контроллером) ---
+    def update_visualizer(self, points):
+        """Обновляет отображение облака в визуализаторе."""
+        self.vis_widget.update_cloud(points)
+
+    def update_cloud(self, points):
+        """Обновляет отображение облака в визуализаторе."""
+        self.vis_widget.update_cloud(points)
+
+    def show_status(self, message):
+        """Выводит сообщение в строку состояния."""
+        self.statusBar().showMessage(message)
+
+    # --- Обработчики событий от кнопок ---
+    def on_load(self):
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Выберите файл облака точек", "",
             "Point Cloud files (*.ply *.pcd *.xyz);;All files (*)"
         )
-        if not file_path:
+        if file_path:
+            self.controller.load_file(file_path)
+
+    def on_reset(self):
+        self.controller.reset_to_original()
+
+    def apply_filter_dialog(self):
+        dlg = FilterDialog(self)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            filter_instance = dlg.get_filter()
+            if filter_instance:
+                success, msg = self.controller.apply_filter(filter_instance)
+                self.statusBar().showMessage(msg)
+
+    def reset_to_original(self):
+        success, msg = self.controller.reset_to_original()
+        self.statusBar().showMessage(msg)
+        def on_filter(self):
+            # Пока просто заглушка для демонстрации
+            # Здесь будет диалог выбора фильтра
+            self.show_status("Выбор фильтра ещё не реализован")
+
+    def on_evaluate(self):
+        # Заглушка для оценки
+        self.show_status("Оценка ещё не реализована")
+
+    def on_save(self):
+        if self.controller.get_current_cloud() is None:
+            self.show_status("Нет данных для сохранения")
             return
-
-        try:
-            self.current_cloud = load_from_file(file_path)
-            points = self.current_cloud.get_xyz()
-            self.vis_widget.update_cloud(points)
-            self.statusBar().showMessage(f"Загружено {len(self.current_cloud)} точек из {file_path}")
-        except Exception as e:
-            self.statusBar().showMessage(f"Ошибка: {e}")
-
-    def update_cloud(self):
-        # Тестовая генерация случайного облака
-        points = np.random.rand(1000, 3) * 10
-        self.vis_widget.update_cloud(points)
-        self.statusBar().showMessage(f"Обновлено тестовое облако: {len(points)} точек")
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Сохранить облако", "",
+            "PLY files (*.ply);;PCD files (*.pcd);;XYZ files (*.xyz)"
+        )
+        if file_path:
+            self.controller.save_current(file_path)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

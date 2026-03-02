@@ -14,7 +14,7 @@ class VisualizerWidget(QWidget):
         
         self.timer = QTimer()
         self.timer.timeout.connect(self._update_render)
-        self.timer.start(50)
+        self.timer.start(50)  # 20 FPS
 
         opt = self.vis.get_render_option()
         opt.point_size = 3.0
