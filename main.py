@@ -1,6 +1,6 @@
 import sys
 import numpy as np
-from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QVBoxLayout, QWidget, QPushButton, QFileDialog, QHBoxLayout
+from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QTextEdit, QVBoxLayout, QWidget, QPushButton, QFileDialog, QHBoxLayout
 from view.visualizer_widget import VisualizerWidget
 from view.filter_dialog import FilterDialog
 from controller.main_controller import MainController
@@ -58,12 +58,18 @@ class MainWindow(QMainWindow):
         self.vis_widget = VisualizerWidget()
         main_layout.addWidget(self.vis_widget)
 
+        # Текстовое поле для отчёта
+        self.report_text = QTextEdit()
+        self.report_text.setReadOnly(True)
+        self.report_text.setMaximumHeight(150)
+        main_layout.addWidget(self.report_text)
+
         self.statusBar().showMessage("Готово")
 
     # --- Методы обратного вызова (вызываются контроллером) ---
-    def update_visualizer(self, points):
-        """Обновляет отображение облака в визуализаторе."""
-        self.vis_widget.update_cloud(points)
+    #def update_visualizer(self, points):
+    #    """Обновляет отображение облака в визуализаторе."""
+    #    self.vis_widget.update_cloud(points)
 
     def update_cloud(self, points):
         """Обновляет отображение облака в визуализаторе."""
@@ -81,6 +87,7 @@ class MainWindow(QMainWindow):
         )
         if file_path:
             self.controller.load_file(file_path)
+            self.report_text.clear()  # очищаем отчёт
 
     def on_reset(self):
         self.controller.reset_to_original()
@@ -91,19 +98,26 @@ class MainWindow(QMainWindow):
             filter_instance = dlg.get_filter()
             if filter_instance:
                 success, msg = self.controller.apply_filter(filter_instance)
-                self.statusBar().showMessage(msg)
+                #self.statusBar().showMessage(msg)
 
     def reset_to_original(self):
         success, msg = self.controller.reset_to_original()
+        if success:
+            self.report_text.clear()
         self.statusBar().showMessage(msg)
-        def on_filter(self):
+        #def on_filter(self):
             # Пока просто заглушка для демонстрации
             # Здесь будет диалог выбора фильтра
-            self.show_status("Выбор фильтра ещё не реализован")
+            #self.show_status("Выбор фильтра ещё не реализован")
 
     def on_evaluate(self):
-        # Заглушка для оценки
-        self.show_status("Оценка ещё не реализована")
+        report, error = self.controller.evaluate()
+        if error:
+            self.report_text.setText(f"Ошибка: {error}")
+            self.show_status(error)
+        else:
+            self.report_text.setText(report.get_report_string())
+            self.show_status("Оценка завершена")
 
     def on_save(self):
         if self.controller.get_current_cloud() is None:
