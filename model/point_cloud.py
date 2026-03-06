@@ -51,6 +51,21 @@ class PointCloud:
         self.points['x'] = xyz[:, 0]
         self.points['y'] = xyz[:, 1]
         self.points['z'] = xyz[:, 2]
+    
+    def get_rgb(self) -> np.ndarray:
+        """Возвращает массив цветов (N, 3) в диапазоне [0, 1] для Open3D."""
+        # Проверяем, есть ли поля цвета в структурированном массиве
+        if 'r' in self.points.dtype.names and 'g' in self.points.dtype.names and 'b' in self.points.dtype.names:
+            rgb = np.empty((len(self), 3), dtype=np.float32)
+            rgb[:, 0] = self.points['r'] / 255.0
+            rgb[:, 1] = self.points['g'] / 255.0
+            rgb[:, 2] = self.points['b'] / 255.0
+            # Если все цвета нулевые (или не заданы), вернём None, чтобы использовать серый
+            if np.all(rgb == 0):
+                return None
+            return rgb
+        else:
+            return None
 
     def copy(self) -> 'PointCloud':
         """Создаёт глубокую копию."""

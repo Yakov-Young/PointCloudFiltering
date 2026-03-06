@@ -71,9 +71,15 @@ class MainWindow(QMainWindow):
     #    """Обновляет отображение облака в визуализаторе."""
     #    self.vis_widget.update_cloud(points)
 
-    def update_cloud(self, points):
-        """Обновляет отображение облака в визуализаторе."""
-        self.vis_widget.update_cloud(points)
+    def update_cloud(self, points=None):
+        """
+        Обновляет визуализатор, используя текущее облако из контроллера.
+        Параметр points игнорируется (сохранён для совместимости с вызовами из контроллера).
+        """
+        if self.controller.current_cloud is not None:
+            xyz = self.controller.current_cloud.get_xyz()
+            rgb = self.controller.current_cloud.get_rgb()
+            self.vis_widget.update_cloud(xyz, rgb)
 
     def show_status(self, message):
         """Выводит сообщение в строку состояния."""

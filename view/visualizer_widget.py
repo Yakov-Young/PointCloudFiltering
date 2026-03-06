@@ -24,12 +24,21 @@ class VisualizerWidget(QWidget):
         self.vis.poll_events()
         self.vis.update_renderer()
 
-    def update_cloud(self, points):
+    def update_cloud(self, points, colors=None):
+        """
+        Обновляет отображаемое облако.
+        points: np.ndarray (N, 3) – координаты точек.
+        colors: np.ndarray (N, 3) в диапазоне [0, 1] или None.
+        """
         if points is None or len(points) == 0:
             return
         self.pcd.points = o3d.utility.Vector3dVector(points)
-        self.pcd.paint_uniform_color([0.5, 0.5, 0.5])
-        
+        if colors is not None and colors.shape[0] == points.shape[0]:
+            self.pcd.colors = o3d.utility.Vector3dVector(colors)
+        else:
+            self.pcd.paint_uniform_color([0.5, 0.5, 0.5])  # серый по умолчанию
+
+        # Обновление геометрии и камеры (как раньше)
         self.vis.remove_geometry(self.pcd)
         self.vis.add_geometry(self.pcd)
 
