@@ -1,6 +1,6 @@
 import sys
 import numpy as np
-from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QTextEdit, QVBoxLayout, QWidget, QPushButton, QFileDialog, QHBoxLayout
+from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QLabel, QMainWindow, QTextEdit, QVBoxLayout, QWidget, QPushButton, QFileDialog, QHBoxLayout
 from view.visualizer_widget import VisualizerWidget
 from view.filter_dialog import FilterDialog
 from controller.main_controller import MainController
@@ -63,6 +63,14 @@ class MainWindow(QMainWindow):
         self.report_text.setReadOnly(True)
         self.report_text.setMaximumHeight(150)
         main_layout.addWidget(self.report_text)
+        
+        # Переключатель
+        toolbar.addWidget(QLabel("  Режим:"))
+        self.mode_combo = QComboBox()
+        self.mode_combo.addItems(["Однотонный", "Цвета", "Выбросы"])
+        self.mode_combo.currentTextChanged.connect(self.on_mode_changed)
+        #self.mode_combo.setCurrentText("Цвета")
+        toolbar.addWidget(self.mode_combo)
 
         self.statusBar().showMessage("Готово")
 
@@ -80,6 +88,52 @@ class MainWindow(QMainWindow):
             xyz = self.controller.current_cloud.get_xyz()
             rgb = self.controller.current_cloud.get_rgb()
             self.vis_widget.update_cloud(xyz, rgb)
+
+    def refresh_visualization(self):
+        """Обновляет отображение облака с учётом текущего режима окраски."""
+        if self.controller.current_cloud is None:
+            return
+
+        xyz = self.controller.current_cloud.get_xyz()
+        mode = self.mode_combo.currentText()
+        cloud = self.controller.current_cloud
+
+        if mode == "Цвета":
+            if all(f in cloud.points.dtype.names for f in ('red', 'green', 'blue')):
+                colors = np.zeros((len(xyz), 3), dtype=np.float32)
+                colors[:, 0] = cloud.points['red'] / 255.0
+                colors[:, 1] = cloud.points['green'] / 255.0
+                colors[:, 2] = cloud.points['blue'] / 255.0
+                if np.all(colors == 0):
+                    colors = None
+            else:
+                colors = None
+
+        elif mode == "Выбросы":
+            if 'scalar_isGarbage' in cloud.points.dtype.names:
+                garbage = cloud.points['scalar_isGarbage']
+                colors = np.zeros((len(xyz), 3), dtype=np.float32)
+                # Красный для выбросов (значение 1)
+                colors[garbage == 1] = [1.0, 0.0, 0.0]
+                # Синий для нормальных точек (значение 0)
+                colors[garbage == 0] = [0.0, 0.0, 1.0]
+                # Для всех остальных значений (например, NaN или другие числа) — серый
+                mask_other = (garbage != 0) & (garbage != 1)
+                if np.any(mask_other):
+                    colors[mask_other] = [0.5, 0.5, 0.5]
+                # Если все цвета нулевые (нет точек с 0 или 1), передаём None
+                if np.all(colors == 0):
+                    colors = None
+            else:
+                colors = None
+
+        else:  # Однотонный
+            colors = None
+
+        self.vis_widget.update_cloud(xyz, colors)
+
+    def on_mode_changed(self, mode):
+        self.refresh_visualization()
 
     def show_status(self, message):
         """Выводит сообщение в строку состояния."""

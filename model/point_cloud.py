@@ -10,12 +10,14 @@ class PointCloud:
         ('x', 'f4'),
         ('y', 'f4'),
         ('z', 'f4'),
-        ('intensity', 'f4'),
-        ('classification', 'i4'),
-        ('r', 'u1'),
-        ('g', 'u1'),
-        ('b', 'u1'),
-        ('return_num', 'u1')
+        ('red', 'u1'),
+        ('green', 'u1'),
+        ('blue', 'u1'),
+        ('nx', 'f4'),
+        ('ny', 'f4'),
+        ('nz', 'f4'),
+        ('scalar_intensity', 'f4'),
+        ('scalar_isGarbage', 'f4')
     ])
     
     def __init__(self, points: Optional[np.ndarray] = None):

@@ -1,47 +1,78 @@
 import open3d as o3d
 import numpy as np
+import plyfile
 from model.point_cloud import PointCloud
 
+def load_ply_with_all_fields(path: str) -> PointCloud:
+    """Загружает PLY с сохранением всех полей через plyfile."""
+    plydata = plyfile.PlyData.read(path)
+    vertex = plydata['vertex'].data  # структурированный массив с исходными типами
+    n = len(vertex)
+    data = np.zeros(n, dtype=PointCloud.DTYPE)
+    for name in PointCloud.DTYPE.names:
+        if name in vertex.dtype.names:
+            # Приводим к нужному типу (обычно совпадает, но гарантируем)
+            data[name] = vertex[name].astype(PointCloud.DTYPE[name])
+        # Если поля нет, оно остаётся нулевым (что уже есть)
+    return PointCloud(data)
+
 def load_from_file(path: str) -> PointCloud:
-    """Загружает облако из файла, поддерживаемые форматы: pcd, ply, xyz, etc."""
+    """Загружает облако из файла. Для PLY использует plyfile, для остальных — Open3D."""
+    if path.lower().endswith('.ply'):
+        return load_ply_with_all_fields(path)
+    # Для других форматов (pcd, xyz) используем Open3D
     o3d_cloud = o3d.io.read_point_cloud(path)
     if not o3d_cloud.has_points():
         raise ValueError(f"Не удалось загрузить точки из {path}")
 
-    # Получаем точки (N,3)
     points = np.asarray(o3d_cloud.points, dtype=np.float32)
     n = points.shape[0]
-
-    # Создаём структурированный массив
     data = np.zeros(n, dtype=PointCloud.DTYPE)
     data['x'] = points[:, 0]
     data['y'] = points[:, 1]
     data['z'] = points[:, 2]
 
-    # Если есть цвета (RGB от 0 до 255)
     if o3d_cloud.has_colors():
-        colors = np.asarray(o3d_cloud.colors, dtype=np.float32)  # в диапазоне [0,1]
-        data['r'] = (colors[:, 0] * 255).clip(0, 255).astype(np.uint8)
-        data['g'] = (colors[:, 1] * 255).clip(0, 255).astype(np.uint8)
-        data['b'] = (colors[:, 2] * 255).clip(0, 255).astype(np.uint8)
+        colors = np.asarray(o3d_cloud.colors, dtype=np.float32)
+        data['red'] = (colors[:, 0] * 255).clip(0, 255).astype(np.uint8)
+        data['green'] = (colors[:, 1] * 255).clip(0, 255).astype(np.uint8)
+        data['blue'] = (colors[:, 2] * 255).clip(0, 255).astype(np.uint8)
 
-    # Open3D не хранит интенсивность, классификацию и номер возврата в общем виде,
-    # поэтому эти поля останутся нулевыми. Для LAS/LAZ потребуется отдельный загрузчик.
+    if o3d_cloud.has_normals():
+        normals = np.asarray(o3d_cloud.normals, dtype=np.float32)
+        data['nx'] = normals[:, 0]
+        data['ny'] = normals[:, 1]
+        data['nz'] = normals[:, 2]
 
     return PointCloud(data)
 
+def save_to_ply_with_all_fields(cloud: PointCloud, path: str):
+    """Сохраняет облако в PLY, используя исходные типы полей."""
+    # cloud.points уже имеет нужный dtype (f4, u1, f4...)
+    vertex_element = plyfile.PlyElement.describe(cloud.points, 'vertex')
+    plyfile.PlyData([vertex_element], text=False).write(path)
+
 def save_to_file(cloud: PointCloud, path: str):
-    """Сохраняет облако в файл. Формат определяется расширением."""
-    # Создаём Open3D PointCloud
-    o3d_cloud = o3d.geometry.PointCloud()
-    o3d_cloud.points = o3d.utility.Vector3dVector(cloud.get_xyz())
+    """Сохраняет облако в файл. Для PLY сохраняет все поля, для других форматов использует Open3D (с потерей дополнительных полей)."""
+    if path.lower().endswith('.ply'):
+        save_to_ply_with_all_fields(cloud, path)
+    else:
+        o3d_cloud = o3d.geometry.PointCloud()
+        o3d_cloud.points = o3d.utility.Vector3dVector(cloud.get_xyz())
 
-    # Если есть цвета (хотя бы один ненулевой), добавляем
-    if np.any(cloud.points['r'] | cloud.points['g'] | cloud.points['b']):
-        colors = np.zeros((len(cloud), 3), dtype=np.float32)
-        colors[:, 0] = cloud.points['r'] / 255.0
-        colors[:, 1] = cloud.points['g'] / 255.0
-        colors[:, 2] = cloud.points['b'] / 255.0
-        o3d_cloud.colors = o3d.utility.Vector3dVector(colors)
+        if np.any(cloud.points['red'] | cloud.points['green'] | cloud.points['blue']):
+            colors = np.zeros((len(cloud), 3), dtype=np.float32)
+            colors[:, 0] = cloud.points['red'] / 255.0
+            colors[:, 1] = cloud.points['green'] / 255.0
+            colors[:, 2] = cloud.points['blue'] / 255.0
+            o3d_cloud.colors = o3d.utility.Vector3dVector(colors)
 
-    o3d.io.write_point_cloud(path, o3d_cloud)
+        if np.any(cloud.points['nx'] | cloud.points['ny'] | cloud.points['nz']):
+            normals = np.zeros((len(cloud), 3), dtype=np.float32)
+            normals[:, 0] = cloud.points['nx']
+            normals[:, 1] = cloud.points['ny']
+            normals[:, 2] = cloud.points['nz']
+            o3d_cloud.normals = o3d.utility.Vector3dVector(normals)
+
+        o3d.io.write_point_cloud(path, o3d_cloud)
+        print(f"Предупреждение: при сохранении в {path.split('.')[-1]} формате дополнительные поля (интенсивность, мусор) были потеряны. Используйте PLY для сохранения всех атрибутов.")

@@ -14,38 +14,54 @@ class VisualizerWidget(QWidget):
         
         self.timer = QTimer()
         self.timer.timeout.connect(self._update_render)
-        self.timer.start(50)  # 20 FPS
+        self.timer.start(50)
 
         opt = self.vis.get_render_option()
         opt.point_size = 3.0
-        opt.background_color = np.array([0, 0, 0])
+        opt.background_color = np.array([0.0235, 0.2392, 0.3529])  # тёмно-серый фон
+
+        # Хранилище для параметров камеры
+        self.saved_view_params = None
 
     def _update_render(self):
         self.vis.poll_events()
         self.vis.update_renderer()
 
+    def _get_view_parameters(self):
+        """Сохраняет текущие параметры камеры как объект PinholeCameraParameters."""
+        return self.vis.get_view_control().convert_to_pinhole_camera_parameters()
+
+    def _set_view_parameters(self, params):
+        """Восстанавливает параметры камеры из объекта PinholeCameraParameters."""
+        self.vis.get_view_control().convert_from_pinhole_camera_parameters(params)
+
     def update_cloud(self, points, colors=None):
-        """
-        Обновляет отображаемое облако.
-        points: np.ndarray (N, 3) – координаты точек.
-        colors: np.ndarray (N, 3) в диапазоне [0, 1] или None.
-        """
         if points is None or len(points) == 0:
             return
+
+        # Если облако уже содержало точки (было не пусто), сохраняем текущий вид
+        if len(self.pcd.points) > 0:
+            self.saved_view_params = self._get_view_parameters()
+
         self.pcd.points = o3d.utility.Vector3dVector(points)
-        if colors is not None and colors.shape[0] == points.shape[0]:
+        if colors is not None:
             self.pcd.colors = o3d.utility.Vector3dVector(colors)
         else:
-            self.pcd.paint_uniform_color([0.5, 0.5, 0.5])  # серый по умолчанию
+            self.pcd.paint_uniform_color([0.5, 0.5, 0.5])
 
-        # Обновление геометрии и камеры (как раньше)
+        # Принудительное обновление геометрии
         self.vis.remove_geometry(self.pcd)
         self.vis.add_geometry(self.pcd)
 
-        view_control = self.vis.get_view_control()
-        view_control.set_front([0, 0, -1])
-        view_control.set_up([0, -1, 0])
-        view_control.set_zoom(0.8)
+        # Восстанавливаем камеру, если есть сохранённые параметры
+        if self.saved_view_params is not None:
+            self._set_view_parameters(self.saved_view_params)
+        else:
+            # Первый показ: настраиваем камеру по умолчанию
+            view_control = self.vis.get_view_control()
+            view_control.set_front([0, 0, -1])
+            view_control.set_up([0, -1, 0])
+            view_control.set_zoom(0.8)
 
     def closeEvent(self, event):
         self.timer.stop()
