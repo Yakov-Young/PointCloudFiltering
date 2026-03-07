@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QLabel, QMainWindo
 from view.visualizer_widget import VisualizerWidget
 from view.filter_dialog import FilterDialog
 from controller.main_controller import MainController
+from view.pipeline_dialog import PipelineDialog
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -43,6 +44,11 @@ class MainWindow(QMainWindow):
         self.btn_filter = QPushButton("Применить фильтр")
         self.btn_filter.clicked.connect(self.apply_filter_dialog)
         toolbar.addWidget(self.btn_filter)
+
+        # Пайплайн
+        self.btn_pipeline = QPushButton("Пайплайн")
+        self.btn_pipeline.clicked.connect(self.manage_pipeline)
+        toolbar.addWidget(self.btn_pipeline)
 
         self.btn_evaluate = QPushButton("Оценка")
         self.btn_evaluate.clicked.connect(self.on_evaluate)
@@ -165,10 +171,15 @@ class MainWindow(QMainWindow):
         if success:
             self.report_text.clear()
         self.statusBar().showMessage(msg)
-        #def on_filter(self):
-            # Пока просто заглушка для демонстрации
-            # Здесь будет диалог выбора фильтра
-            #self.show_status("Выбор фильтра ещё не реализован")
+
+    def manage_pipeline(self):
+        dlg = PipelineDialog(self)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            filters = dlg.get_pipeline()
+            if filters:
+                success, msg = self.controller.apply_pipeline(filters)
+                self.show_status(msg)
+                self.refresh_visualization()
 
     def on_evaluate(self):
         report, error = self.controller.evaluate()

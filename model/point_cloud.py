@@ -20,19 +20,15 @@ class PointCloud:
         ('scalar_isGarbage', 'f4')
     ])
     
-    def __init__(self, points: Optional[np.ndarray] = None):
-        """
-        points: структурированный массив numpy с полями из DTYPE.
-        Если None, создаётся пустой массив.
-        """
+    def __init__(self, points: Optional[np.ndarray] = None, original_indices: Optional[np.ndarray] = None):
         if points is None:
             self.points = np.empty(0, dtype=self.DTYPE)
         else:
-            # Проверяем, что массив имеет нужные поля
-            required_fields = set(self.DTYPE.names)
-            if not required_fields.issubset(set(points.dtype.names or [])):
-                raise ValueError(f"Массив должен содержать поля: {required_fields}")
             self.points = points
+        if original_indices is not None:
+            self.original_indices = original_indices
+        else:
+            self.original_indices = np.arange(len(self.points))  # по умолчанию соответствие самому себе
         self.coord_sys: str = ""
 
     def __len__(self) -> int:
@@ -70,9 +66,6 @@ class PointCloud:
             return None
 
     def copy(self) -> 'PointCloud':
-        """Создаёт глубокую копию."""
-        new_cloud = PointCloud(self.points.copy())
+        new_cloud = PointCloud(self.points.copy(), self.original_indices.copy())
         new_cloud.coord_sys = self.coord_sys
         return new_cloud
-
-    # Позже добавим методы для фильтрации и т.д.

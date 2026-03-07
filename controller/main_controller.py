@@ -1,3 +1,4 @@
+import numpy as np
 from model.point_cloud import PointCloud
 from iot.pointcloud_io import load_from_file, save_to_file
 from evaluation.report import EvaluationReport
@@ -50,20 +51,31 @@ class MainController:
         try:
             filtered = filter_instance.apply(self.current_cloud)
             self.current_cloud = filtered
-            # Сохраняем маску удаления, если фильтр её предоставил
-            if hasattr(filter_instance, 'last_mask') and filter_instance.last_mask is not None:
-                # last_mask: True – оставлена, False – удалена
-                # Преобразуем в маску удаления: True – удалена
-                self.last_removal_mask = ~filter_instance.last_mask
-            else:
-                self.last_removal_mask = None
+            # Маска удаления для исходного облака (для оценки) будет вычислена в evaluate
             if self.view:
                 self.view.update_cloud(self.current_cloud.get_xyz())
                 self.view.show_status(f"Фильтр '{filter_instance.name}' применён. Осталось точек: {len(filtered)}")
             return True, f"Фильтр применён. Осталось точек: {len(filtered)}"
         except Exception as e:
             return False, f"Ошибка при применении фильтра: {e}"
-
+        
+    def apply_pipeline(self, filters):
+        if self.current_cloud is None:
+            return False, "Нет загруженного облака"
+        
+        current = self.current_cloud
+        for filter_instance in filters:
+            try:
+                current = filter_instance.apply(current)
+            except Exception as e:
+                return False, f"Ошибка при применении фильтра {filter_instance.name}: {e}"
+        
+        self.current_cloud = current
+        if self.view:
+            self.view.update_cloud(self.current_cloud.get_xyz())
+            self.view.show_status(f"Применено {len(filters)} фильтров. Осталось точек: {len(current)}")
+        return True, f"Применено {len(filters)} фильтров. Осталось точек: {len(current)}"
+    
     def save_current(self, path):
         if self.current_cloud is None:
             msg = "Нет данных для сохранения"
@@ -89,9 +101,15 @@ class MainController:
             report = EvaluationReport(self.original_cloud, self.current_cloud)
             report.compute_basic_metrics()
             report.compute_knn_metrics(k)
-            # Добавляем классификационные метрики, если есть маска удаления
-            if self.last_removal_mask is not None:
-                report.compute_classification_metrics(self.last_removal_mask)
+            
+            # Вычисляем маску удаления для исходного облака
+            if self.original_cloud is not None and self.current_cloud is not None:
+                removal_mask = np.ones(len(self.original_cloud), dtype=bool)
+                # Индексы точек, которые остались в current_cloud (в исходном облаке)
+                survived_indices = self.current_cloud.original_indices
+                removal_mask[survived_indices] = False  # эти точки не удалены
+                report.compute_classification_metrics(removal_mask)
+            
             return report, None
         except Exception as e:
             return None, f"Ошибка при вычислении метрик: {e}"

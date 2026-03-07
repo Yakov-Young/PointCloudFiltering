@@ -6,21 +6,18 @@ from model.point_cloud import PointCloud
 def load_ply_with_all_fields(path: str) -> PointCloud:
     """Загружает PLY с сохранением всех полей через plyfile."""
     plydata = plyfile.PlyData.read(path)
-    vertex = plydata['vertex'].data  # структурированный массив с исходными типами
+    vertex = plydata['vertex'].data
     n = len(vertex)
     data = np.zeros(n, dtype=PointCloud.DTYPE)
     for name in PointCloud.DTYPE.names:
         if name in vertex.dtype.names:
-            # Приводим к нужному типу (обычно совпадает, но гарантируем)
             data[name] = vertex[name].astype(PointCloud.DTYPE[name])
-        # Если поля нет, оно остаётся нулевым (что уже есть)
-    return PointCloud(data)
+    return PointCloud(data, original_indices=np.arange(n))
 
 def load_from_file(path: str) -> PointCloud:
     """Загружает облако из файла. Для PLY использует plyfile, для остальных — Open3D."""
     if path.lower().endswith('.ply'):
         return load_ply_with_all_fields(path)
-    # Для других форматов (pcd, xyz) используем Open3D
     o3d_cloud = o3d.io.read_point_cloud(path)
     if not o3d_cloud.has_points():
         raise ValueError(f"Не удалось загрузить точки из {path}")
@@ -44,7 +41,7 @@ def load_from_file(path: str) -> PointCloud:
         data['ny'] = normals[:, 1]
         data['nz'] = normals[:, 2]
 
-    return PointCloud(data)
+    return PointCloud(data, original_indices=np.arange(n))
 
 def save_to_ply_with_all_fields(cloud: PointCloud, path: str):
     """Сохраняет облако в PLY, используя исходные типы полей."""

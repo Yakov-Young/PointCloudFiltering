@@ -1,6 +1,7 @@
 # view/filter_dialog.py
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QFormLayout, QDialogButtonBox, QWidget
 from filters.statistical_outlier import StatisticalOutlierFilter
+from filters.radius_outlier import RadiusOutlierFilter
 
 class FilterDialog(QDialog):
     def __init__(self, parent=None):
@@ -8,9 +9,10 @@ class FilterDialog(QDialog):
         self.setWindowTitle("Выбор фильтра")
         self.setModal(True)
         
-        # Список доступных фильтров (можно расширять)
+        # Список доступных фильтров (добавляем ROR)
         self.filter_classes = {
-            "Statistical Outlier Removal": StatisticalOutlierFilter
+            "Statistical Outlier Removal": StatisticalOutlierFilter,
+            "Radius Outlier Removal": RadiusOutlierFilter
         }
         
         self.selected_filter = None
