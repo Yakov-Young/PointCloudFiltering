@@ -10,6 +10,7 @@ class MainController:
         self.original_cloud: Optional[PointCloud] = None  # исходное облако (неизменяемое)
         self.current_cloud: Optional[PointCloud] = None   # текущее облако (после фильтров)
         self.view = None  # будет установлен позже для обновления интерфейса
+        self.last_removal_mask = None  # маска удаления после последнего фильтра
 
     def set_view(self, view):
         """Устанавливает ссылку на главное окно для обратной связи."""
@@ -36,6 +37,7 @@ class MainController:
                 self.view.show_status(msg)
             return False, msg
         self.current_cloud = self.original_cloud.copy()
+        self.last_removal_mask = None  # сбрасываем маску
         if self.view:
             self.view.update_cloud(self.current_cloud.get_xyz())
             self.view.show_status(f"Сброшено к исходному ({len(self.current_cloud)} точек)")
@@ -44,22 +46,23 @@ class MainController:
 
     def apply_filter(self, filter_instance):
         if self.current_cloud is None:
-            msg = "Нет загруженного облака"
-            if self.view:
-                self.view.show_status(msg)
-            return False, msg
+            return False, "Нет загруженного облака"
         try:
             filtered = filter_instance.apply(self.current_cloud)
             self.current_cloud = filtered
+            # Сохраняем маску удаления, если фильтр её предоставил
+            if hasattr(filter_instance, 'last_mask') and filter_instance.last_mask is not None:
+                # last_mask: True – оставлена, False – удалена
+                # Преобразуем в маску удаления: True – удалена
+                self.last_removal_mask = ~filter_instance.last_mask
+            else:
+                self.last_removal_mask = None
             if self.view:
                 self.view.update_cloud(self.current_cloud.get_xyz())
                 self.view.show_status(f"Фильтр '{filter_instance.name}' применён. Осталось точек: {len(filtered)}")
             return True, f"Фильтр применён. Осталось точек: {len(filtered)}"
         except Exception as e:
-            msg = f"Ошибка при применении фильтра: {e}"
-            if self.view:
-                self.view.show_status(msg)
-            return False, msg
+            return False, f"Ошибка при применении фильтра: {e}"
 
     def save_current(self, path):
         if self.current_cloud is None:
@@ -80,24 +83,18 @@ class MainController:
             return False, msg
         
     def evaluate(self, k=10):
-        """Выполняет оценку текущего облака относительно исходного."""
         if self.original_cloud is None or self.current_cloud is None:
-            msg = "Нет данных для оценки"
-            if self.view:
-                self.view.show_status(msg)
-            return None, msg
-        
+            return None, "Нет данных для оценки"
         try:
             report = EvaluationReport(self.original_cloud, self.current_cloud)
-            report.compute_all_metrics(k)
-            if self.view:
-                self.view.show_status("Оценка завершена")
+            report.compute_basic_metrics()
+            report.compute_knn_metrics(k)
+            # Добавляем классификационные метрики, если есть маска удаления
+            if self.last_removal_mask is not None:
+                report.compute_classification_metrics(self.last_removal_mask)
             return report, None
         except Exception as e:
-            msg = f"Ошибка при вычислении метрик: {e}"
-            if self.view:
-                self.view.show_status(msg)
-            return None, msg
+            return None, f"Ошибка при вычислении метрик: {e}"
 
     def get_current_cloud(self) -> Optional[PointCloud]:
         return self.current_cloud
