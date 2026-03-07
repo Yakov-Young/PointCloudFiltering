@@ -2,6 +2,7 @@
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QFormLayout, QDialogButtonBox, QWidget
 from filters.statistical_outlier import StatisticalOutlierFilter
 from filters.radius_outlier import RadiusOutlierFilter
+from filters.lof_filter import LOFilter
 
 class FilterDialog(QDialog):
     def __init__(self, parent=None):
@@ -12,7 +13,8 @@ class FilterDialog(QDialog):
         # Список доступных фильтров (добавляем ROR)
         self.filter_classes = {
             "Statistical Outlier Removal": StatisticalOutlierFilter,
-            "Radius Outlier Removal": RadiusOutlierFilter
+            "Radius Outlier Removal": RadiusOutlierFilter,
+            "Local Outlier Factor (LOF)": LOFilter
         }
         
         self.selected_filter = None

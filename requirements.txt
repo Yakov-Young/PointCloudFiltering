@@ -1,3 +1,4 @@
 PyQt6
 open3d>=0.15
 numpy
+scikit-learn
