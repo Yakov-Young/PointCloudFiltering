@@ -73,6 +73,9 @@ cover/
 # pyenv
 .python-version
 
+# Sheets
+.csv
+
 # celery beat schedule
 celerybeat-schedule
 
