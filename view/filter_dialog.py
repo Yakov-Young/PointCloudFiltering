@@ -66,12 +66,13 @@ class FilterDialog(QDialog):
         for param_name, value in params.items():
             if isinstance(value, int):
                 widget = QSpinBox()
-                widget.setRange(-1000000, 1000000)  # разумные пределы
+                widget.setRange(1, 1000000)  # разумные пределы
                 widget.setValue(value)
             elif isinstance(value, float):
                 widget = QDoubleSpinBox()
-                widget.setRange(-1000000.0, 1000000.0)
+                widget.setRange(0.001, 1000000.0)
                 widget.setValue(value)
+                widget.setSingleStep(0.01)
                 widget.setDecimals(3)
             else:
                 continue  # неподдерживаемый тип

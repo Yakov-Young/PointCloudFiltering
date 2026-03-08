@@ -30,16 +30,8 @@ class DSORFilter(Filter):
         self.last_mask = None
 
     def apply(self, cloud: PointCloud) -> PointCloud:
-        if len(cloud) == 0:
-            self.last_mask = np.array([], dtype=bool)
-            return cloud
-
         xyz = cloud.get_xyz()
         n_points = len(xyz)
-
-        if n_points <= 1:
-            self.last_mask = np.ones(n_points, dtype=bool)
-            return PointCloud(cloud.points.copy(), cloud.original_indices.copy())
 
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(xyz)
@@ -50,38 +42,40 @@ class DSORFilter(Filter):
 
         for i in range(n_points):
             _, idx, dists2 = tree.search_knn_vector_3d(xyz[i], k_search)
-
-            if len(idx) <= 1:
-                mean_distances[i] = np.inf
-                continue
-
-            idx = np.asarray(idx)
             dists = np.sqrt(np.asarray(dists2, dtype=np.float64))
-
             if idx[0] == i:
                 dists = dists[1:]
-            else:
-                dists = dists[:self.k]
+            mean_distances[i] = dists[:self.k].mean() if len(dists) > 0 else np.inf
 
-            if len(dists) == 0:
-                mean_distances[i] = np.inf
-            else:
-                mean_distances[i] = dists[:self.k].mean()
-
-        finite_mask = np.isfinite(mean_distances)
-        if not np.any(finite_mask):
-            self.last_mask = np.zeros(n_points, dtype=bool)
-            return PointCloud(cloud.points[:0].copy(), cloud.original_indices[:0].copy())
-
-        mu = mean_distances[finite_mask].mean()
-        sigma = mean_distances[finite_mask].std()
-        global_threshold = mu + self.std_ratio * sigma
-
+        # Дальность от сканера (начало координат)
         ranges = np.linalg.norm(xyz, axis=1)
 
-        dynamic_thresholds = global_threshold * (1.0 + self.range_multiplier * ranges)
+        # Разбиение на бины по дальности
+        num_bins = int(self.range_multiplier)  # используем range_multiplier как число бинов
+        bin_edges = np.linspace(ranges.min(), ranges.max(), num_bins + 1)
 
-        inlier_mask = mean_distances <= dynamic_thresholds
+        inlier_mask = np.ones(n_points, dtype=bool)
+
+        for b in range(num_bins):
+            in_bin = (ranges >= bin_edges[b]) & (ranges < bin_edges[b + 1])
+            if b == num_bins - 1:  # последний бин включает правую границу
+                in_bin = (ranges >= bin_edges[b]) & (ranges <= bin_edges[b + 1])
+
+            if in_bin.sum() == 0:
+                continue
+
+            local_dists = mean_distances[in_bin]
+            finite = np.isfinite(local_dists)
+            if not np.any(finite):
+                continue
+
+            mu_local = local_dists[finite].mean()
+            sigma_local = local_dists[finite].std()
+            threshold = mu_local + self.std_ratio * sigma_local
+
+            outliers_in_bin = in_bin & (mean_distances > threshold)
+            inlier_mask[outliers_in_bin] = False
+
         self.last_mask = inlier_mask
 
         inlier_indices = np.where(inlier_mask)[0]
