@@ -52,7 +52,7 @@ class EvaluationReport:
 
     from scipy.spatial import cKDTree
 
-    def compute_knn_metrics(self, k=10, n_jobs=8):
+    def compute_knn_metrics(self, k=10, n_jobs=6):
         if len(self.original) == 0 or len(self.filtered) == 0:
             self.metrics['original_mean_knn'] = 0
             self.metrics['filtered_mean_knn'] = 0
@@ -62,7 +62,7 @@ class EvaluationReport:
         def mean_knn_distance_parallel(points, k, n_jobs):
             tree = cKDTree(points)
             # query возвращает расстояния и индексы для k ближайших соседей, включая саму точку
-            distances, _ = tree.query(points, k=k+1, workers=6)
+            distances, _ = tree.query(points, k=k+1, workers=n_jobs)
             # исключаем расстояние до самой точки (первый столбец)
             mean_dist = np.mean(distances[:, 1:])
             return mean_dist

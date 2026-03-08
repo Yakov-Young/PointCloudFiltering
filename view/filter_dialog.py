@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox
 from filters.statistical_outlier import StatisticalOutlierFilter
 from filters.radius_outlier import RadiusOutlierFilter
 from filters.lof_filter import LOFilter
+from filters.pca_curvature_filter import PCACurvatureFilter
 
 class FilterDialog(QDialog):
     def __init__(self, parent=None):
@@ -14,7 +15,8 @@ class FilterDialog(QDialog):
         self.filter_classes = {
             "Statistical Outlier Removal": StatisticalOutlierFilter,
             "Radius Outlier Removal": RadiusOutlierFilter,
-            "Local Outlier Factor (LOF)": LOFilter
+            "Local Outlier Factor (LOF)": LOFilter,
+            "PCA Curvature Filter": PCACurvatureFilter
         }
         
         self.selected_filter = None

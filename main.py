@@ -159,26 +159,33 @@ class MainWindow(QMainWindow):
         self.controller.reset_to_original()
 
     def apply_filter_dialog(self):
+        current_mode = self.mode_combo.currentText()  # запоминаем текущий режим
         dlg = FilterDialog(self)
         if dlg.exec() == QDialog.DialogCode.Accepted:
             filter_instance = dlg.get_filter()
             if filter_instance:
                 success, msg = self.controller.apply_filter(filter_instance)
-                #self.statusBar().showMessage(msg)
+                self.show_status(msg)
+                # Восстанавливаем режим (на случай, если он сбросился)
+                self.mode_combo.setCurrentText(current_mode)
+                self.refresh_visualization()
 
     def reset_to_original(self):
+        current_mode = self.mode_combo.currentText()
         success, msg = self.controller.reset_to_original()
-        if success:
-            self.report_text.clear()
-        self.statusBar().showMessage(msg)
+        self.show_status(msg)
+        self.mode_combo.setCurrentText(current_mode)
+        self.refresh_visualization()
 
     def manage_pipeline(self):
+        current_mode = self.mode_combo.currentText()
         dlg = PipelineDialog(self)
         if dlg.exec() == QDialog.DialogCode.Accepted:
             filters = dlg.get_pipeline()
             if filters:
                 success, msg = self.controller.apply_pipeline(filters)
                 self.show_status(msg)
+                self.mode_combo.setCurrentText(current_mode)
                 self.refresh_visualization()
 
     def on_evaluate(self):
