@@ -50,35 +50,46 @@ class EvaluationReport:
         self.metrics['fn'] = int(fn)
         self.metrics['tn'] = int(tn)
 
-    from scipy.spatial import cKDTree
-
     def compute_knn_metrics(self, k=10, n_jobs=6):
+        """
+        Вычисляет среднее и стандартное отклонение средних расстояний до k ближайших соседей.
+        Использует параллельный cKDTree.
+        """
         if len(self.original) == 0 or len(self.filtered) == 0:
             self.metrics['original_mean_knn'] = 0
+            self.metrics['original_std_knn'] = 0
             self.metrics['filtered_mean_knn'] = 0
+            self.metrics['filtered_std_knn'] = 0
             self.metrics['knn_change_percent'] = 0
+            self.metrics['knn_k'] = k
             return
 
-        def mean_knn_distance_parallel(points, k, n_jobs):
+        def compute_stats(points, k, n_jobs):
             tree = cKDTree(points)
-            # query возвращает расстояния и индексы для k ближайших соседей, включая саму точку
+            # distances: (N, k+1) – расстояния до k ближайших соседей, включая саму точку
             distances, _ = tree.query(points, k=k+1, workers=n_jobs)
-            # исключаем расстояние до самой точки (первый столбец)
-            mean_dist = np.mean(distances[:, 1:])
-            return mean_dist
+            # исключаем расстояние до самой точки
+            neighbor_dists = distances[:, 1:]  # (N, k)
+            # среднее расстояние до соседей для каждой точки
+            mean_per_point = np.mean(neighbor_dists, axis=1)
+            overall_mean = np.mean(mean_per_point)
+            overall_std = np.std(mean_per_point)
+            return overall_mean, overall_std
 
         orig_xyz = self.original.get_xyz()
         filt_xyz = self.filtered.get_xyz()
-        
-        orig_mean = mean_knn_distance_parallel(orig_xyz, k, n_jobs)
-        filt_mean = mean_knn_distance_parallel(filt_xyz, k, n_jobs)
-        
+        orig_mean, orig_std = compute_stats(orig_xyz, k, n_jobs)
+        filt_mean, filt_std = compute_stats(filt_xyz, k, n_jobs)
+
         self.metrics['original_mean_knn'] = orig_mean
+        self.metrics['original_std_knn'] = orig_std
         self.metrics['filtered_mean_knn'] = filt_mean
+        self.metrics['filtered_std_knn'] = filt_std
         if orig_mean > 0:
             self.metrics['knn_change_percent'] = 100 * (filt_mean - orig_mean) / orig_mean
         else:
             self.metrics['knn_change_percent'] = 0
+        self.metrics['knn_k'] = k
 
     def compute_all_metrics(self, k=10):
         """Вычисляет все доступные метрики."""
@@ -91,13 +102,17 @@ class EvaluationReport:
             lines.append(f"Исходных точек: {self.metrics['original_count']}")
             lines.append(f"После фильтрации: {self.metrics['filtered_count']}")
             lines.append(f"Удалено точек: {self.metrics['removed_count']} ({self.metrics['removed_percent']:.2f}%)")
+
         if 'original_mean_knn' in self.metrics:
-            lines.append(f"Среднее расстояние до 10 соседей (исх.): {self.metrics['original_mean_knn']:.4f}")
-            lines.append(f"Среднее расстояние до соседей (фильтр): {self.metrics['filtered_mean_knn']:.4f}")
+            k = self.metrics.get('knn_k', 10)
+            lines.append(f"Среднее расстояние до {k} соседей (исх.): {self.metrics['original_mean_knn']:.4f} ± {self.metrics['original_std_knn']:.4f}")
+            lines.append(f"Среднее расстояние до {k} соседей (фильтр): {self.metrics['filtered_mean_knn']:.4f} ± {self.metrics['filtered_std_knn']:.4f}")
             lines.append(f"Изменение среднего расстояния: {self.metrics['knn_change_percent']:.2f}%")
+
         if 'precision' in self.metrics:
             lines.append(f"Точность (Precision): {self.metrics['precision']:.4f}")
             lines.append(f"Полнота (Recall): {self.metrics['recall']:.4f}")
             lines.append(f"F1-мера: {self.metrics['f1']:.4f}")
             lines.append(f"TP: {self.metrics['tp']}, FP: {self.metrics['fp']}, FN: {self.metrics['fn']}, TN: {self.metrics['tn']}")
+
         return "\n".join(lines)

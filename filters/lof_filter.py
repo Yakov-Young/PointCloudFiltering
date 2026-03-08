@@ -19,7 +19,7 @@ class LOFilter(Filter):
             return cloud
         
         # Применяем LOF
-        clf = LocalOutlierFactor(n_neighbors=self.n_neighbors)#, contamination=self.contamination)
+        clf = LocalOutlierFactor(n_neighbors=self.n_neighbors, contamination=self.contamination)
         # Предсказание: -1 для выбросов, 1 для нормальных точек
         y_pred = clf.fit_predict(xyz)
         
