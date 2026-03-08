@@ -27,18 +27,10 @@ class MainWindow(QMainWindow):
         self.btn_load.clicked.connect(self.on_load)
         toolbar.addWidget(self.btn_load)
 
-        #self.btn_reset = QPushButton("Сброс")
-        #self.btn_reset.clicked.connect(self.on_reset)
-        #toolbar.addWidget(self.btn_reset)
-
         # Также добавим кнопку "Сброс" (вернуться к исходному облаку)
         self.btn_reset = QPushButton("Сбросить к исходному")
         self.btn_reset.clicked.connect(self.reset_to_original)
         toolbar.addWidget(self.btn_reset)
-
-        #self.btn_filter = QPushButton("Фильтр")
-        #self.btn_filter.clicked.connect(self.on_filter)
-        #toolbar.addWidget(self.btn_filter)
 
         # В __init__ после других кнопок:
         self.btn_filter = QPushButton("Применить фильтр")
@@ -67,7 +59,7 @@ class MainWindow(QMainWindow):
         # Текстовое поле для отчёта
         self.report_text = QTextEdit()
         self.report_text.setReadOnly(True)
-        self.report_text.setMaximumHeight(150)
+        self.report_text.setMaximumHeight(190)
         main_layout.addWidget(self.report_text)
         
         # Переключатель

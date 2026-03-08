@@ -1,5 +1,6 @@
 # view/filter_dialog.py
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QFormLayout, QDialogButtonBox, QWidget
+from filters.dsor_filter import DSORFilter
 from filters.statistical_outlier import StatisticalOutlierFilter
 from filters.radius_outlier import RadiusOutlierFilter
 from filters.lof_filter import LOFilter
@@ -16,7 +17,8 @@ class FilterDialog(QDialog):
             "Statistical Outlier Removal": StatisticalOutlierFilter,
             "Radius Outlier Removal": RadiusOutlierFilter,
             "Local Outlier Factor (LOF)": LOFilter,
-            "PCA Curvature Filter": PCACurvatureFilter
+            "PCA Curvature Filter": PCACurvatureFilter,
+            "Dynamic SOR": DSORFilter
         }
         
         self.selected_filter = None
