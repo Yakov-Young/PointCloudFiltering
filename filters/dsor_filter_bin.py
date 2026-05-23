@@ -4,7 +4,7 @@ from .base_filter import Filter
 from model.point_cloud import PointCloud
 
 
-class DSORFilter(Filter):
+class DSORFilterBin(Filter):
     """
     Dynamic Statistical Outlier Removal (DSOR).
 

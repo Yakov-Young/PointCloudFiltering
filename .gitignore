@@ -111,3 +111,14 @@ logs/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Archive
+*.zip
+*.7z
+
+# Service batch utils
+batch_analysis_scene1_tuned.py
+batch_analysis_scene1.py
+batch_analysis_scene2.py
+batch_analysis_scene3_tuned.py
+batch-analysis-scene3.py

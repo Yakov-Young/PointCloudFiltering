@@ -11,12 +11,13 @@ import datetime
 import numpy as np
 
 # Импортируем необходимые модули из нашего приложения
+from filters.dsor_filer import DSORFilter
 from model.point_cloud import PointCloud
 from iot.pointcloud_io import load_from_file
 from filters.statistical_outlier import StatisticalOutlierFilter
 from filters.radius_outlier import RadiusOutlierFilter
 from filters.lof_filter import LOFilter
-from filters.dsor_filter import DSORFilter
+from filters.dsor_filter_bin import DSORFilterBin
 from filters.pca_curvature_filter import PCACurvatureFilter
 from evaluation.report import EvaluationReport
 
@@ -46,31 +47,36 @@ def main():
 
     # Конфигурации фильтров: (имя_фильтра, класс, список кортежей (уровень, параметры))
     configs = [
-        ("SOR", StatisticalOutlierFilter, [
-            ("soft", {"nb_neighbors": 20, "std_ratio": 2.5}),
-            ("moderate", {"nb_neighbors": 20, "std_ratio": 2.0}),
-            ("aggressive", {"nb_neighbors": 20, "std_ratio": 1.5})
-        ]),
-        ("ROR", RadiusOutlierFilter, [
-            ("soft", {"radius": 0.025, "min_neighbors": 3}),
-            ("moderate", {"radius": 0.02, "min_neighbors": 5}),
-            ("aggressive", {"radius": 0.015, "min_neighbors": 8})
-        ]),
-        ("LOF", LOFilter, [
-            ("soft", {"n_neighbors": 20, "contamination": 0.02}),
-            ("moderate", {"n_neighbors": 20, "contamination": 0.04}),
-            ("aggressive", {"n_neighbors": 20, "contamination": 0.08})
-        ]),
-        ("DSOR", DSORFilter, [
+        # ("SOR", StatisticalOutlierFilter, [
+        #     ("soft", {"nb_neighbors": 20, "std_ratio": 2.5}),
+        #     ("moderate", {"nb_neighbors": 20, "std_ratio": 2.0}),
+        #     ("aggressive", {"nb_neighbors": 20, "std_ratio": 1.5})
+        # ]),
+        # ("ROR", RadiusOutlierFilter, [
+        #     ("soft", {"radius": 0.025, "min_neighbors": 3}),
+        #     ("moderate", {"radius": 0.02, "min_neighbors": 5}),
+        #     ("aggressive", {"radius": 0.015, "min_neighbors": 8})
+        # ]),
+        # ("LOF", LOFilter, [
+        #     ("soft", {"n_neighbors": 20, "contamination": 0.02}),
+        #     # ("moderate", {"n_neighbors": 20, "contamination": 0.04}),
+        #     # ("aggressive", {"n_neighbors": 20, "contamination": 0.08})
+        # ]),
+        ("DSOR", DSORFilterBin, [
             ("soft", {"k": 20, "range_multiplier": 8.0, "std_ratio": 2.5}),
             ("moderate", {"k": 20, "range_multiplier": 8.0, "std_ratio": 2.0}),
             ("aggressive", {"k": 20, "range_multiplier": 8.0, "std_ratio": 1.5})
         ]),
-        ("PCA", PCACurvatureFilter, [
-            ("soft", {"k": 30, "percentile": 99}),
-            ("moderate", {"k": 30, "percentile": 97}),
-            ("aggressive", {"k": 30, "percentile": 95})
-        ])
+        ("DSORN", DSORFilter, [
+            ("soft", {"k": 20, "range_multiplier": 1.2, "std_ratio": 2.0}),
+            ("moderate", {"k": 20, "range_multiplier": 0.9, "std_ratio": 2.0}),
+            ("aggressive", {"k": 20, "range_multiplier": 0.7, "std_ratio": 2.0})
+        ]),
+        # ("PCA", PCACurvatureFilter, [
+        #     ("soft", {"k": 40, "percentile": 99}),
+        #     ("moderate", {"k": 40, "percentile": 95}),
+        #     ("aggressive", {"k": 40, "percentile": 90})
+        # ])
     ]
 
     results = []
