@@ -1,5 +1,13 @@
-PyQt6
+# GUI
+PyQt6>=6.4
+
+# Point cloud processing
+scikit-learn>=1.2
 open3d>=0.15
-numpy
-scikit-learn
-plyfile
+
+# Numerical computation
+numpy>=2.0
+scipy>=1.10
+
+# PLY file I/O
+plyfile>=0.9
