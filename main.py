@@ -132,10 +132,10 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(message)
 
     def on_load(self):
-    # Обработчики событий от кнопок
+        # Обработчики событий от кнопок
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Выберите файл облака точек", "",
-            "Point Cloud files (*.ply *.pcd *.xyz);;All files (*)"
+            "PLY files (*.ply);;All files (*)"
         )
         if file_path:
             self.controller.load_file(file_path)
@@ -189,7 +189,7 @@ class MainWindow(QMainWindow):
             return
         file_path, _ = QFileDialog.getSaveFileName(
             self, "Сохранить облако", "",
-            "PLY files (*.ply);;PCD files (*.pcd);;XYZ files (*.xyz)"
+            "PLY files (*.ply)"
         )
         if file_path:
             self.controller.save_current(file_path)
