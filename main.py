@@ -67,15 +67,9 @@ class MainWindow(QMainWindow):
         self.mode_combo = QComboBox()
         self.mode_combo.addItems(["Однотонный", "Цвета", "Выбросы"])
         self.mode_combo.currentTextChanged.connect(self.on_mode_changed)
-        #self.mode_combo.setCurrentText("Цвета")
         toolbar.addWidget(self.mode_combo)
 
         self.statusBar().showMessage("Готово")
-
-    # --- Методы обратного вызова (вызываются контроллером) ---
-    #def update_visualizer(self, points):
-    #    """Обновляет отображение облака в визуализаторе."""
-    #    self.vis_widget.update_cloud(points)
 
     def update_cloud(self, points=None):
         """
@@ -88,7 +82,7 @@ class MainWindow(QMainWindow):
             self.vis_widget.update_cloud(xyz, rgb)
 
     def refresh_visualization(self):
-        """Обновляет отображение облака с учётом текущего режима окраски."""
+        # Обновляет отображение облака с учётом текущего режима окраски
         if self.controller.current_cloud is None:
             return
 
@@ -134,11 +128,11 @@ class MainWindow(QMainWindow):
         self.refresh_visualization()
 
     def show_status(self, message):
-        """Выводит сообщение в строку состояния."""
+       # Выводит сообщение в строку состояния.
         self.statusBar().showMessage(message)
 
-    # --- Обработчики событий от кнопок ---
     def on_load(self):
+    # Обработчики событий от кнопок
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Выберите файл облака точек", "",
             "Point Cloud files (*.ply *.pcd *.xyz);;All files (*)"

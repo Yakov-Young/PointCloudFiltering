@@ -122,3 +122,8 @@ batch_analysis_scene1.py
 batch_analysis_scene2.py
 batch_analysis_scene3_tuned.py
 batch-analysis-scene3.py
+
+# User directiory & file
+Расчеты основной сцены/
+sd.ply
+test.py

@@ -28,11 +28,11 @@ class VisualizerWidget(QWidget):
         self.vis.update_renderer()
 
     def _get_view_parameters(self):
-        """Сохраняет текущие параметры камеры как объект PinholeCameraParameters."""
+        # Сохраняет текущие параметры камеры как объект PinholeCameraParameters.
         return self.vis.get_view_control().convert_to_pinhole_camera_parameters()
 
     def _set_view_parameters(self, params):
-        """Восстанавливает параметры камеры из объекта PinholeCameraParameters."""
+        # Восстанавливает параметры камеры из объекта PinholeCameraParameters.
         self.vis.get_view_control().convert_from_pinhole_camera_parameters(params)
 
     def update_cloud(self, points, colors=None):

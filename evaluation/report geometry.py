@@ -1,5 +1,4 @@
 import numpy as np
-import open3d as o3d
 from scipy.spatial import cKDTree
 from model.point_cloud import PointCloud
 

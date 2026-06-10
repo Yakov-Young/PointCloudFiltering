@@ -1,5 +1,4 @@
-# view/filter_dialog.py
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QFormLayout, QDialogButtonBox, QWidget
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QSpinBox, QDoubleSpinBox, QFormLayout, QDialogButtonBox, QWidget
 from filters.dsor_filer import DSORFilter
 from filters.statistical_outlier import StatisticalOutlierFilter
 from filters.radius_outlier import RadiusOutlierFilter
@@ -86,7 +85,7 @@ class FilterDialog(QDialog):
                 child.widget().deleteLater()
     
     def get_filter(self):
-        """Возвращает настроенный экземпляр фильтра."""
+        # Возвращает настроенный экземпляр фильтра
         if self.current_filter_instance is None:
             return None
         

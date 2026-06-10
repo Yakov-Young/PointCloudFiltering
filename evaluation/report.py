@@ -1,11 +1,9 @@
-# evaluation/report.py
 import numpy as np
-import open3d as o3d
 from model.point_cloud import PointCloud
 from scipy.spatial import cKDTree
 
 class EvaluationReport:
-    """Отчёт о сравнении исходного и отфильтрованного облаков."""
+    # Отчёт о сравнении исходного и отфильтрованного облаков
     
     def __init__(self, original: PointCloud, filtered: PointCloud):
         self.original = original
@@ -13,7 +11,7 @@ class EvaluationReport:
         self.metrics = {}
 
     def compute_basic_metrics(self):
-        """Вычисляет базовые метрики: количество точек, процент удаления."""
+        # Вычисляет базовые метрики: количество точек, процент удаления
         n_orig = len(self.original)
         n_filt = len(self.filtered)
         
@@ -92,7 +90,7 @@ class EvaluationReport:
         self.metrics['knn_k'] = k
 
     def compute_all_metrics(self, k=10):
-        """Вычисляет все доступные метрики."""
+        # Вычисляет все доступные метрики
         self.compute_basic_metrics()
         self.compute_knn_metrics(k)
 

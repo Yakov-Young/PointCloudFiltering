@@ -4,7 +4,7 @@ from .base_filter import Filter
 from model.point_cloud import PointCloud
 
 class RadiusOutlierFilter(Filter):
-    """Удаление выбросов на основе количества соседей в заданном радиусе."""
+    # Удаление выбросов на основе количества соседей в заданном радиусе
     
     def __init__(self, radius: float = 0.050, min_neighbors: int = 10):
         super().__init__("Radius Outlier Removal")

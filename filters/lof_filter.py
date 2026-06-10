@@ -4,7 +4,7 @@ from .base_filter import Filter
 from model.point_cloud import PointCloud
 
 class LOFilter(Filter):
-    """Фильтр на основе Local Outlier Factor (LOF) из scikit-learn."""
+    # Фильтр на основе Local Outlier Factor (LOF) из scikit-learn
     
     def __init__(self, n_neighbors: int = 20, contamination: float = 0.1):
         super().__init__("Local Outlier Factor")

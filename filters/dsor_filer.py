@@ -23,8 +23,8 @@ class DSORFilter(Filter):
     def __init__(
         self,
         k: int = 20,
-        std_ratio: float = 1.0,
-        range_multiplier: float = 0.02,
+        std_ratio: float = 2.0,
+        range_multiplier: float = 0.7,
     ):
         super().__init__("Dynamic SOR")
         self.k = k

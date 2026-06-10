@@ -1,8 +1,6 @@
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
-                             QPushButton, QListWidgetItem, QMessageBox)
-from PyQt6.QtCore import Qt
+                             QPushButton)
 from view.filter_dialog import FilterDialog
-from filters.base_filter import Filter
 
 class PipelineDialog(QDialog):
     def __init__(self, parent=None):
@@ -76,5 +74,5 @@ class PipelineDialog(QDialog):
             self.list_widget.addItem(item_text)
 
     def get_pipeline(self):
-        """Возвращает список фильтров для применения."""
+        # Возвращает список фильтров для применения
         return self.filters

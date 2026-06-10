@@ -1,9 +1,8 @@
 import numpy as np
 from typing import Optional, Tuple
-#from .point import Point  # для совместимости
 
 class PointCloud:
-    """Облако точек с атрибутами."""
+    # Облако точек с атрибутами
     
     # Описание полей для структурированного массива
     DTYPE = np.dtype([
@@ -35,7 +34,7 @@ class PointCloud:
         return len(self.points)
 
     def get_xyz(self) -> np.ndarray:
-        """Возвращает массив координат (N, 3) как float32."""
+        # Возвращает массив координат (N, 3) как float32
         xyz = np.empty((len(self), 3), dtype=np.float32)
         xyz[:, 0] = self.points['x']
         xyz[:, 1] = self.points['y']
@@ -43,7 +42,7 @@ class PointCloud:
         return xyz
 
     def set_xyz(self, xyz: np.ndarray):
-        """Устанавливает координаты из массива (N,3)."""
+        # Устанавливает координаты из массива (N,3)
         if xyz.shape[0] != len(self):
             raise ValueError("Количество точек не совпадает")
         self.points['x'] = xyz[:, 0]
@@ -51,7 +50,7 @@ class PointCloud:
         self.points['z'] = xyz[:, 2]
     
     def get_rgb(self) -> np.ndarray:
-        """Возвращает массив цветов (N, 3) в диапазоне [0, 1] для Open3D."""
+        # Возвращает массив цветов (N, 3) в диапазоне [0, 1] для Open3D
         # Проверяем, есть ли поля цвета в структурированном массиве
         if 'r' in self.points.dtype.names and 'g' in self.points.dtype.names and 'b' in self.points.dtype.names:
             rgb = np.empty((len(self), 3), dtype=np.float32)

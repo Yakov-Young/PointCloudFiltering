@@ -4,7 +4,7 @@ import plyfile
 from model.point_cloud import PointCloud
 
 def load_ply_with_all_fields(path: str) -> PointCloud:
-    """Загружает PLY с сохранением всех полей через plyfile."""
+    # Загружает PLY с сохранением всех полей через plyfile
     plydata = plyfile.PlyData.read(path)
     vertex = plydata['vertex'].data
     n = len(vertex)
@@ -15,7 +15,7 @@ def load_ply_with_all_fields(path: str) -> PointCloud:
     return PointCloud(data, original_indices=np.arange(n))
 
 def load_from_file(path: str) -> PointCloud:
-    """Загружает облако из файла. Для PLY использует plyfile, для остальных — Open3D."""
+    # Загружает облако из файла. Для PLY использует plyfile, для остальных — Open3D
     if path.lower().endswith('.ply'):
         return load_ply_with_all_fields(path)
     o3d_cloud = o3d.io.read_point_cloud(path)
@@ -44,13 +44,12 @@ def load_from_file(path: str) -> PointCloud:
     return PointCloud(data, original_indices=np.arange(n))
 
 def save_to_ply_with_all_fields(cloud: PointCloud, path: str):
-    """Сохраняет облако в PLY, используя исходные типы полей."""
-    # cloud.points уже имеет нужный dtype (f4, u1, f4...)
+    # Сохраняет облако в PLY, используя исходные типы полей
     vertex_element = plyfile.PlyElement.describe(cloud.points, 'vertex')
     plyfile.PlyData([vertex_element], text=False).write(path)
 
 def save_to_file(cloud: PointCloud, path: str):
-    """Сохраняет облако в файл. Для PLY сохраняет все поля, для других форматов использует Open3D (с потерей дополнительных полей)."""
+    # Сохраняет облако в файл. Для PLY сохраняет все поля, для других форматов использует Open3D (с потерей дополнительных полей)
     if path.lower().endswith('.ply'):
         save_to_ply_with_all_fields(cloud, path)
     else:

@@ -5,7 +5,7 @@ from evaluation.report import EvaluationReport
 from typing import Optional
 
 class MainController:
-    """Контроллер приложения. Управляет данными и взаимодействием с моделью."""
+    # Контроллер приложения. Управляет данными и взаимодействием с моделью
 
     def __init__(self):
         self.original_cloud: Optional[PointCloud] = None  # исходное облако (неизменяемое)
@@ -14,7 +14,7 @@ class MainController:
         self.last_removal_mask = None  # маска удаления после последнего фильтра
 
     def set_view(self, view):
-        """Устанавливает ссылку на главное окно для обратной связи."""
+        # Устанавливает ссылку на главное окно для обратной связи
         self.view = view
 
     def load_file(self, path):
