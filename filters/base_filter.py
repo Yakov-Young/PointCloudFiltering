@@ -1,4 +1,3 @@
-# filters/base_filter.py
 from abc import ABC, abstractmethod
 from model.point_cloud import PointCloud
 
