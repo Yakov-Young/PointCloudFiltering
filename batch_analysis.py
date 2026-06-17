@@ -98,7 +98,7 @@ def main():
             # Создаём отчёт
             report = EvaluationReport(original_cloud, filtered_cloud)
             report.compute_basic_metrics()
-            report.compute_knn_metrics(k=10, n_jobs=8)  # используем 8 потоков
+            report.compute_knn_metrics(k=10, n_jobs=6)  # используем 6 потоков
 
             # Если есть ground truth, добавляем классификационные метрики
             if has_gt and filter_instance.last_mask is not None:
